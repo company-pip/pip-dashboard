@@ -230,7 +230,7 @@ function renderSummary() {
     const top   = NAMES.find(n => fn(n) === max) || '—';
     const avg   = Math.round(total / NAMES.length);
     html = `
-      <div class="scard teal"><div class="scard-label">全隊${m.label}</div><div class="scard-val" style="font-size:22px">${fmt(total)}</div><div class="scard-sub">元（本月）</div></div>
+      <div class="scard teal"><div class="scard-label">全隊${m.label}</div><div class="scard-val" style="font-size:22px">${fmt(total)}</div><div class="scard-sub">元（第四期）</div></div>
       <div class="scard blue"><div class="scard-label">最高收款</div><div class="scard-val" style="font-size:22px">${fmt(max)}</div><div class="scard-sub">${top}</div></div>
       <div class="scard amber"><div class="scard-label">人均收款</div><div class="scard-val" style="font-size:22px">${fmt(avg)}</div><div class="scard-sub">元 / 人</div></div>`;
 
@@ -240,7 +240,7 @@ function renderSummary() {
     const top   = NAMES.find(n => getValue(n,m.key) === max) || '—';
     const avg   = Math.round(total / NAMES.length);
     html = `
-      <div class="scard teal"><div class="scard-label">全隊累計</div><div class="scard-val">${total}</div><div class="scard-sub">${m.unit}（本月）</div></div>
+      <div class="scard teal"><div class="scard-label">全隊累計</div><div class="scard-val">${total}</div><div class="scard-sub">${m.unit}（第四期）</div></div>
       <div class="scard blue"><div class="scard-label">最多</div><div class="scard-val">${max}</div><div class="scard-sub">${top}</div></div>
       <div class="scard amber"><div class="scard-label">人均</div><div class="scard-val">${avg}</div><div class="scard-sub">${m.unit} / 人</div></div>`;
   }
