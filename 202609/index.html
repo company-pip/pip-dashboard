@@ -85,7 +85,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
   <div class="topbar-left">
     <div class="logo-dot"></div>
     <span class="topbar-title">蓓福業務日報</span>
-    <span class="topbar-sub">DASHBOARD · 第四期 8月</span>
+    <span class="topbar-sub" id="topbarSub">DASHBOARD</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
     <span class="last-updated" id="lastUpdated">載入中...</span>
@@ -105,17 +105,17 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-// ★ 貼上 Apps Script Web App 網址（第四期 8月部署後的網址，若有重新部署請更新此處）
+// ★ 貼上 Apps Script Web App 網址（若有重新部署新版本，記得更新此處）
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj66ktG8CtZ8jw3wG2TKx8VLozc_o0bQwAFsowXTEbbK1G5NsPuE7g3K3kUg8FeIk89A/exec';
 
-// ── fallback 示範資料（僅在連線失敗、或還沒設定 FIELD_CONFIG/TARGETS 時顯示，非真實數字）──
+// ── fallback 示範資料（僅在連線失敗、或還沒設定 FIELD_CONFIG/TARGETS/SETTINGS 時顯示，非真實數字）──
 // 欄位代碼跟 Code.gs 的 setupFieldConfigSheet_() 預設值一致。
 const FALLBACK_FIELD_CONFIG = [
   { key:'order',     label:'訂單數',       unit:'單', hasTarget:false, aggregate:'sum'    },
   { key:'pay_today',  label:'今日收款金額', unit:'元', hasTarget:false, aggregate:'sum'    },
   { key:'ratio',      label:'佔比產品',     unit:'個', hasTarget:false, aggregate:'sum'    },
   { key:'trad_f',     label:'傳統陳列家數', unit:'家', hasTarget:true,  aggregate:'latest' },
-  { key:'chain_f',    label:'連鎖合約家數', unit:'家', hasTarget:false, aggregate:'latest' },
+  { key:'chain_f',    label:'MAX888簽約連鎖出貨', unit:'數量', hasTarget:false, aggregate:'latest' },
 ];
 const FALLBACK_RAW = [
   {date:'08/01',name:'張田裕', pay_today:0, order:3, ratio:1, trad_f:49, chain_f:7},
@@ -139,6 +139,7 @@ const FALLBACK_TARGETS = {
   '范振軒': { trad_f:122, chain_f:6 },
   '黃敬凱': { trad_f:146, chain_f:7 },
 };
+const FALLBACK_PERIOD_LABEL = '第四期 8月（示範資料）';
 
 // ── 業務分區（Google Sheet 沒有「區域」概念，這塊仍固定在前端維護，
 //    新增/離職業務時，手動改這裡的名字清單即可）──
@@ -157,6 +158,7 @@ const COLORS = NAMES.map(n => {
 let METRICS = FALLBACK_FIELD_CONFIG;
 let RAW = FALLBACK_RAW;
 let TARGETS = FALLBACK_TARGETS;
+let PERIOD_LABEL = FALLBACK_PERIOD_LABEL;
 let activeMetric = null;
 let chartInst = null;
 
@@ -173,6 +175,8 @@ async function loadData() {
       RAW = json.raw;
       TARGETS = json.targets || {};
       METRICS = json.fieldConfig.length ? json.fieldConfig : FALLBACK_FIELD_CONFIG;
+      PERIOD_LABEL = (json.settings && json.settings.periodLabel) ? json.settings.periodLabel : FALLBACK_PERIOD_LABEL;
+      document.getElementById('topbarSub').textContent = 'DASHBOARD · ' + PERIOD_LABEL;
       document.getElementById('lastUpdated').textContent = '最後更新：' + new Date().toLocaleTimeString('zh-TW');
     } else { throw new Error('格式錯誤'); }
   } catch(e) {
@@ -186,7 +190,9 @@ async function loadData() {
 
 function useFallback(reason) {
   RAW = FALLBACK_RAW; TARGETS = FALLBACK_TARGETS; METRICS = FALLBACK_FIELD_CONFIG;
+  PERIOD_LABEL = FALLBACK_PERIOD_LABEL;
   if (!activeMetric) activeMetric = METRICS[0].key;
+  document.getElementById('topbarSub').textContent = 'DASHBOARD · ' + PERIOD_LABEL;
   document.getElementById('lastUpdated').textContent = '示範資料（' + reason + '）';
   renderAll();
 }
@@ -246,7 +252,7 @@ function renderSummary() {
     const top   = NAMES.find(n => getValue(n,m) === max) || '—';
     const avg   = Math.round(total / NAMES.length);
     html = `
-      <div class="scard teal"><div class="scard-label">全隊${m.label}</div><div class="scard-val" style="font-size:22px">${fmtVal(total,m)}</div><div class="scard-sub">元（第四期）</div></div>
+      <div class="scard teal"><div class="scard-label">全隊${m.label}</div><div class="scard-val" style="font-size:22px">${fmtVal(total,m)}</div><div class="scard-sub">元（${PERIOD_LABEL}）</div></div>
       <div class="scard blue"><div class="scard-label">最高</div><div class="scard-val" style="font-size:22px">${fmtVal(max,m)}</div><div class="scard-sub">${top}</div></div>
       <div class="scard amber"><div class="scard-label">人均</div><div class="scard-val" style="font-size:22px">${fmtVal(avg,m)}</div><div class="scard-sub">元 / 人</div></div>`;
 
@@ -256,7 +262,7 @@ function renderSummary() {
     const top   = NAMES.find(n => getValue(n,m) === max) || '—';
     const avg   = Math.round(total / NAMES.length);
     html = `
-      <div class="scard teal"><div class="scard-label">全隊累計</div><div class="scard-val">${total}</div><div class="scard-sub">${m.unit}（本月）</div></div>
+      <div class="scard teal"><div class="scard-label">全隊累計</div><div class="scard-val">${total}</div><div class="scard-sub">${m.unit}（${PERIOD_LABEL}）</div></div>
       <div class="scard blue"><div class="scard-label">最多</div><div class="scard-val">${max}</div><div class="scard-sub">${top}</div></div>
       <div class="scard amber"><div class="scard-label">人均</div><div class="scard-val">${avg}</div><div class="scard-sub">${m.unit} / 人</div></div>`;
   }
