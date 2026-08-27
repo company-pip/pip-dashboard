@@ -139,7 +139,8 @@ const FALLBACK_TARGETS = {
   '范振軒': { trad_f:122, chain_f:6 },
   '黃敬凱': { trad_f:146, chain_f:7 },
 };
-const FALLBACK_PERIOD_LABEL = '第四期 8月（示範資料）';
+const FALLBACK_PERIOD_LABEL = '第四期 8月';
+const NO_SETTINGS_LABEL = '（尚未設定期別，請確認已部署新版 Code.gs 並建立 SETTINGS 分頁）';
 
 // ── 業務分區（Google Sheet 沒有「區域」概念，這塊仍固定在前端維護，
 //    新增/離職業務時，手動改這裡的名字清單即可）──
@@ -175,7 +176,7 @@ async function loadData() {
       RAW = json.raw;
       TARGETS = json.targets || {};
       METRICS = json.fieldConfig.length ? json.fieldConfig : FALLBACK_FIELD_CONFIG;
-      PERIOD_LABEL = (json.settings && json.settings.periodLabel) ? json.settings.periodLabel : FALLBACK_PERIOD_LABEL;
+      PERIOD_LABEL = (json.settings && json.settings.periodLabel) ? json.settings.periodLabel : NO_SETTINGS_LABEL;
       document.getElementById('topbarSub').textContent = 'DASHBOARD · ' + PERIOD_LABEL;
       document.getElementById('lastUpdated').textContent = '最後更新：' + new Date().toLocaleTimeString('zh-TW');
     } else { throw new Error('格式錯誤'); }
