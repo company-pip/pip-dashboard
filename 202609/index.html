@@ -95,6 +95,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
 
 <div class="main">
   <div class="tabs" id="metricTabs"></div>
+  <div class="tabs" id="scopeToggle" style="margin-bottom:16px"></div>
   <div class="summary-grid" id="summaryCards"></div>
   <div id="mainContent">
     <div class="state-box"><div class="spinner"></div><span>載入資料中...</span></div>
@@ -162,6 +163,8 @@ let TARGETS = FALLBACK_TARGETS;
 let PERIOD_LABEL = FALLBACK_PERIOD_LABEL;
 let activeMetric = null;
 let chartInst = null;
+// 'period' = 算目前這個期別分頁裡的全部資料；'month' = 只算本月(依日曆當月)
+let viewScope = 'period';
 
 async function loadData() {
   document.getElementById('lastUpdated').textContent = '更新中...';
@@ -200,13 +203,21 @@ function useFallback(reason) {
 
 function currentMetric() { return METRICS.find(m => m.key === activeMetric) || METRICS[0]; }
 
+// viewScope==='month' 時，只取「日期欄的月份」跟現在日曆月份相同的列；
+// viewScope==='period' 時，就是目前這個期別分頁裡的全部資料(維持原本行為)。
+function getScopedRaw() {
+  if (viewScope !== 'month') return RAW;
+  const nowMonth = new Date().getMonth() + 1;
+  return RAW.filter(r => parseInt(String(r.date).split('/')[0], 10) === nowMonth);
+}
+
 function getLatest(name, key) {
-  const rows = RAW.filter(r => r.name === name && (r[key] || 0) > 0)
+  const rows = getScopedRaw().filter(r => r.name === name && (r[key] || 0) > 0)
                   .sort((a,b) => b.date.localeCompare(a.date));
   return rows.length ? (rows[0][key] || 0) : 0;
 }
 function getSum(name, key) {
-  return RAW.filter(r => r.name === name).reduce((acc, r) => acc + (r[key] || 0), 0);
+  return getScopedRaw().filter(r => r.name === name).reduce((acc, r) => acc + (r[key] || 0), 0);
 }
 function getValue(name, m) {
   return m.aggregate === 'latest' ? getLatest(name, m.key) : getSum(name, m.key);
@@ -222,7 +233,7 @@ function renderAll() {
     document.getElementById('mainContent').innerHTML = '<div class="state-box">尚未在 FIELD_CONFIG 設定任何要顯示的欄位</div>';
     return;
   }
-  renderTabs(); renderSummary(); renderMain();
+  renderTabs(); renderScopeToggle(); renderSummary(); renderMain();
 }
 
 function renderTabs() {
@@ -230,6 +241,19 @@ function renderTabs() {
     `<button class="tab${m.key===activeMetric?' active':''}" onclick="setMetric('${m.key}')">${m.label}</button>`
   ).join('');
 }
+
+function renderScopeToggle() {
+  const el = document.getElementById('scopeToggle');
+  if (!el) return;
+  // PERIOD_LABEL 格式是「第五期 9月」，按鈕只取空白前的期別名稱，不顯示月份
+  const periodShort = PERIOD_LABEL.split(/\s+/)[0] || PERIOD_LABEL;
+  el.innerHTML = `
+    <button class="tab${viewScope==='period'?' active':''}" onclick="setScope('period')">${periodShort}</button>
+    <button class="tab${viewScope==='month'?' active':''}" onclick="setScope('month')">本月</button>
+  `;
+}
+
+function setScope(scope) { viewScope = scope; renderAll(); }
 
 function renderSummary() {
   const m = currentMetric();
@@ -253,7 +277,7 @@ function renderSummary() {
     const top   = NAMES.find(n => getValue(n,m) === max) || '—';
     const avg   = Math.round(total / NAMES.length);
     html = `
-      <div class="scard teal"><div class="scard-label">全隊${m.label}</div><div class="scard-val" style="font-size:22px">${fmtVal(total,m)}</div><div class="scard-sub">元（${PERIOD_LABEL}）</div></div>
+      <div class="scard teal"><div class="scard-label">全隊${m.label}</div><div class="scard-val" style="font-size:22px">${fmtVal(total,m)}</div><div class="scard-sub">元（${viewScope==='month'?'本月':PERIOD_LABEL}）</div></div>
       <div class="scard blue"><div class="scard-label">最高</div><div class="scard-val" style="font-size:22px">${fmtVal(max,m)}</div><div class="scard-sub">${top}</div></div>
       <div class="scard amber"><div class="scard-label">人均</div><div class="scard-val" style="font-size:22px">${fmtVal(avg,m)}</div><div class="scard-sub">元 / 人</div></div>`;
 
@@ -263,7 +287,7 @@ function renderSummary() {
     const top   = NAMES.find(n => getValue(n,m) === max) || '—';
     const avg   = Math.round(total / NAMES.length);
     html = `
-      <div class="scard teal"><div class="scard-label">全隊累計</div><div class="scard-val">${total}</div><div class="scard-sub">${m.unit}（${PERIOD_LABEL}）</div></div>
+      <div class="scard teal"><div class="scard-label">全隊累計</div><div class="scard-val">${total}</div><div class="scard-sub">${m.unit}（${viewScope==='month'?'本月':PERIOD_LABEL}）</div></div>
       <div class="scard blue"><div class="scard-label">最多</div><div class="scard-val">${max}</div><div class="scard-sub">${top}</div></div>
       <div class="scard amber"><div class="scard-label">人均</div><div class="scard-val">${avg}</div><div class="scard-sub">${m.unit} / 人</div></div>`;
   }
