@@ -170,7 +170,13 @@ async function loadData() {
     return;
   }
   try {
-    const res  = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now());
+    // 改用 POST 抓資料:POST 請求不會像 GET 一樣容易被瀏覽器/中繼代理快取住,
+    // 確保每次打開頁面都是抓到 Google Sheet 當下最新的內容。
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避免瀏覽器對 application/json 送出 CORS 預檢請求
+      body: JSON.stringify({ action: 'dashboard' })
+    });
     const json = await res.json();
     if (json.raw && json.fieldConfig) {
       RAW = json.raw;
@@ -200,6 +206,14 @@ function useFallback(reason) {
 
 function currentMetric() { return METRICS.find(m => m.key === activeMetric) || METRICS[0]; }
 
+// 日期是 "M/D" 純文字(不補零),不能直接當字串比大小("9/9" 文字上會大於 "9/18")。
+// 一律先轉成「月*100+日」的數字再比較,才會照真正的日期先後排序。
+function mdToSortable_(dateStr) {
+  const parts = String(dateStr).split('/').map(Number);
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return -1;
+  return parts[0] * 100 + parts[1];
+}
+
 // scope==='month' 時，只取「日期欄的月份」跟現在日曆月份相同的列；
 // scope==='period'(或未設定) 時，就是目前這個期別分頁裡的全部資料。
 // scope 是哪一種，完全由 FIELD_CONFIG 該欄位的「顯示範圍」決定，不是使用者手動切換。
@@ -211,7 +225,7 @@ function getScopedRaw(scope) {
 
 function getLatest(name, key, scope) {
   const rows = getScopedRaw(scope).filter(r => r.name === name && (r[key] || 0) > 0)
-                  .sort((a,b) => b.date.localeCompare(a.date));
+                  .sort((a,b) => mdToSortable_(b.date) - mdToSortable_(a.date));
   return rows.length ? (rows[0][key] || 0) : 0;
 }
 function getSum(name, key, scope) {
