@@ -111,42 +111,44 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyk0EJtAwskBu7f
 // ── fallback 示範資料（僅在連線失敗、或還沒設定 FIELD_CONFIG/TARGETS/SETTINGS 時顯示，非真實數字）──
 // 欄位代碼跟 Code.gs 的 setupFieldConfigSheet_() 預設值一致。
 const FALLBACK_FIELD_CONFIG = [
-  { key:'order',     label:'訂單數',       unit:'單', hasTarget:false, aggregate:'sum',    scope:'period' },
-  { key:'pay_today',  label:'今日收款金額', unit:'元', hasTarget:false, aggregate:'sum',    scope:'period' },
-  { key:'ratio',      label:'佔比產品',     unit:'個', hasTarget:false, aggregate:'sum',    scope:'period' },
-  { key:'trad_f',     label:'傳統陳列家數', unit:'家', hasTarget:true,  aggregate:'latest', scope:'period' },
-  { key:'chain_f',    label:'MAX888簽約連鎖出貨', unit:'數量', hasTarget:false, aggregate:'latest', scope:'period' },
+  { key:'pay_today',   label:'今日收款金額',   unit:'元', hasTarget:false, aggregate:'sum',    scope:'period' },
+  { key:'order',       label:'訂單數',         unit:'單', hasTarget:false, aggregate:'sum',    scope:'month'  },
+  { key:'ratio',       label:'佔比產品',       unit:'個', hasTarget:false, aggregate:'sum',    scope:'month'  },
+  { key:'trad_f',      label:'傳統陳列巡訪',   unit:'家', hasTarget:true,  aggregate:'latest', scope:'period' },
+  { key:'chain_visit', label:'連鎖陳列巡訪',   unit:'家', hasTarget:true,  aggregate:'latest', scope:'period' },
+  { key:'max_trad',    label:'MAX888傳統出貨', unit:'個', hasTarget:false, aggregate:'latest', scope:'period' },
+  { key:'max_chain',   label:'MAX888連鎖出貨', unit:'個', hasTarget:false, aggregate:'latest', scope:'period' },
 ];
 const FALLBACK_RAW = [
-  {date:'08/01',name:'張田裕', pay_today:0, order:3, ratio:1, trad_f:49, chain_f:7},
-  {date:'08/01',name:'劉自強', pay_today:0, order:2, ratio:0, trad_f:60, chain_f:6},
-  {date:'08/01',name:'楊承舜', pay_today:0, order:2, ratio:1, trad_f:29, chain_f:4},
-  {date:'08/01',name:'顏廷樨', pay_today:0, order:3, ratio:1, trad_f:47, chain_f:3},
-  {date:'08/01',name:'陳峰毓', pay_today:0, order:1, ratio:1, trad_f:28, chain_f:3},
-  {date:'08/01',name:'林恩霆', pay_today:0, order:3, ratio:0, trad_f:35, chain_f:2},
-  {date:'08/01',name:'李靜宜', pay_today:0, order:1, ratio:2, trad_f:22, chain_f:1},
-  {date:'08/01',name:'范振軒', pay_today:0, order:2, ratio:2, trad_f:38, chain_f:4},
-  {date:'08/01',name:'黃敬凱', pay_today:0, order:1, ratio:1, trad_f:32, chain_f:2},
+  {date:'10/1',name:'張田裕', pay_today:0, order:3, ratio:1, trad_f:5, chain_visit:1, max_trad:2, max_chain:1},
+  {date:'10/1',name:'劉自強', pay_today:0, order:2, ratio:0, trad_f:6, chain_visit:1, max_trad:1, max_chain:0},
+  {date:'10/1',name:'楊承舜', pay_today:0, order:2, ratio:1, trad_f:3, chain_visit:0, max_trad:1, max_chain:1},
+  {date:'10/1',name:'顏廷樨', pay_today:0, order:3, ratio:1, trad_f:4, chain_visit:1, max_trad:0, max_chain:0},
+  {date:'10/1',name:'陳峰毓', pay_today:0, order:1, ratio:1, trad_f:3, chain_visit:0, max_trad:1, max_chain:0},
+  {date:'10/1',name:'林恩霆', pay_today:0, order:3, ratio:0, trad_f:4, chain_visit:1, max_trad:2, max_chain:1},
+  {date:'10/1',name:'劉庭妤', pay_today:0, order:1, ratio:0, trad_f:0, chain_visit:1, max_trad:0, max_chain:1},
+  {date:'10/1',name:'范振軒', pay_today:0, order:2, ratio:2, trad_f:4, chain_visit:0, max_trad:1, max_chain:0},
+  {date:'10/1',name:'黃敬凱', pay_today:0, order:1, ratio:1, trad_f:3, chain_visit:1, max_trad:0, max_chain:1},
 ];
 const FALLBACK_TARGETS = {
-  '張田裕': { trad_f:138, chain_f:7 },
-  '劉自強': { trad_f:149, chain_f:9 },
-  '楊承舜': { trad_f:141, chain_f:6 },
-  '陳峰毓': { trad_f:129, chain_f:6 },
-  '林恩霆': { trad_f:132, chain_f:3 },
-  '李靜宜': { trad_f:134, chain_f:4 },
-  '顏廷樨': { trad_f:118, chain_f:3 },
-  '范振軒': { trad_f:122, chain_f:6 },
-  '黃敬凱': { trad_f:146, chain_f:7 },
+  '張田裕': { trad_f:138, chain_visit:9  },
+  '劉自強': { trad_f:149, chain_visit:32 },
+  '楊承舜': { trad_f:141, chain_visit:16 },
+  '顏廷樨': { trad_f:129, chain_visit:8  },
+  '陳峰毓': { trad_f:134, chain_visit:14 },
+  '林恩霆': { trad_f:132, chain_visit:14 },
+  '劉庭妤': {             chain_visit:11 },
+  '范振軒': { trad_f:146, chain_visit:15 },
+  '黃敬凱': { trad_f:122, chain_visit:21 },
 };
-const FALLBACK_PERIOD_LABEL = '第四期 8月';
+const FALLBACK_PERIOD_LABEL = '第五期 10月';
 const NO_SETTINGS_LABEL = '（尚未設定期別，請確認已部署新版 Code.gs 並建立 SETTINGS 分頁）';
 
 // ── 業務分區（Google Sheet 沒有「區域」概念，這塊仍固定在前端維護，
 //    新增/離職業務時，手動改這裡的名字清單即可）──
 const REGIONS = [
   { label: '北區', names: ['張田裕','劉自強','楊承舜','顏廷樨'] },
-  { label: '中區', names: ['陳峰毓','林恩霆'] },
+  { label: '中區', names: ['陳峰毓','林恩霆','劉庭妤'] },
   { label: '南區', names: ['范振軒','黃敬凱'] },
 ];
 const NAMES = REGIONS.flatMap(r => r.names);
